@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crewai-soul"
-version = "0.2.0"
-description = "Markdown-native memory for CrewAI agents. Human-readable, git-versionable, no database required."
+version = "0.3.0"
+description = "The soul ecosystem for CrewAI: persistent memory, identity, database schema intelligence, and enterprise API integration."
 readme = "README.md"
 license = "MIT"
 authors = [{name = "Prahlad G. Menon", email = "menon.prahlad@gmail.com"}]
-keywords = ["crewai", "memory", "ai", "agents", "llm", "markdown", "soul"]
+keywords = ["crewai", "memory", "ai", "agents", "llm", "markdown", "soul", "rag", "semantic-layer", "soulmate"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -19,10 +19,13 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "soul-agent>=0.1.7",
+    "soul-schema>=0.1.0",
+    "httpx>=0.25.0",
+]
 
 [project.optional-dependencies]
-rag = ["soul-agent>=0.1.7"]
 crewai = ["crewai>=0.100.0"]
 
 [project.urls]

@@ -1,0 +1,6 @@
+
+[crewai]
+crewai>=0.100.0
+
+[rag]
+soul-agent>=0.1.7

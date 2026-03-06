@@ -1,13 +1,12 @@
 # crewai-soul 🧠
 
-**Markdown-native memory for CrewAI agents.**
+**The soul ecosystem for CrewAI agents.**
 
-Your crew's memory shouldn't require a database. `crewai-soul` stores everything in two simple markdown files:
-
-- `SOUL.md` — Agent identity (who it is, how it behaves)
-- `MEMORY.md` — Timestamped log of all interactions
-
-Human-readable. Git-versionable. No infrastructure required.
+One package, full stack:
+- **Persistent Memory** — Markdown-native, git-versionable, human-readable
+- **Hybrid Retrieval** — RAG + RLM via [soul-agent](https://github.com/menonpg/soul.py)
+- **Database Intelligence** — Auto-generated semantic layers via [soul-schema](https://github.com/menonpg/soul-schema)
+- **Enterprise Ready** — SoulMate API integration for production
 
 ## Install
 
@@ -15,13 +14,19 @@ Human-readable. Git-versionable. No infrastructure required.
 pip install crewai-soul
 ```
 
+This automatically installs:
+- `soul-agent` — Hybrid RAG+RLM memory
+- `soul-schema` — Database semantic layer generator
+
 ## Quick Start
+
+### Basic Memory
 
 ```python
 from crewai import Crew, Agent, Task
 from crewai_soul import SoulMemory
 
-# Create markdown-based memory
+# Create markdown-based memory with full RAG+RLM
 memory = SoulMemory()
 
 # Use it with your crew
@@ -34,30 +39,68 @@ crew = Crew(
 result = crew.kickoff()
 ```
 
-After running, check `MEMORY.md`:
+Your crew's memories are stored in `MEMORY.md` — human-readable, git-versionable, no database required.
 
-```markdown
-# Memory Log
+### Database Schema Intelligence
 
-## 2026-03-06 22:30:15 UTC
-The researcher found that PostgreSQL handles 10k concurrent connections.
+Give your agents understanding of database structure:
 
-## 2026-03-06 22:31:02 UTC
-The writer produced a technical comparison document.
+```python
+from crewai_soul import SchemaMemory
+
+# Connect to any SQLAlchemy-compatible database
+schema = SchemaMemory("postgresql://user:pass@host/db")
+
+# Auto-generate semantic descriptions using LLM
+schema.generate()
+
+# Get context for natural language queries
+context = schema.context_for("Show me revenue by region")
+# Returns formatted markdown with relevant tables/columns
+
+# Use in agent prompts
+agent = Agent(
+    role="Data Analyst",
+    goal="Answer business questions with SQL",
+    backstory=f"You have access to this schema:\n{schema.to_markdown()}"
+)
 ```
 
-## Why Markdown?
+### Enterprise: SoulMate API
+
+For production deployments with multi-tenant isolation:
+
+```python
+from crewai_soul import SoulMateClient
+
+client = SoulMateClient(
+    api_key="your-key",
+    tenant_id="your-org"
+)
+
+# Store memories in the cloud
+client.remember("Critical decision: We're going with PostgreSQL", scope="/project/alpha")
+
+# Semantic search across all memories
+results = client.recall("database decisions")
+
+# Full RAG+RLM question answering
+answer = client.ask("What database did we choose for Project Alpha?")
+```
+
+## Why crewai-soul?
 
 | Feature | CrewAI Built-in | crewai-soul |
 |---------|-----------------|-------------|
-| Storage | Vector database | Markdown files |
+| Storage | Vector database | Markdown files + optional vectors |
 | Human-readable | ❌ | ✅ |
 | Git-versionable | ❌ | ✅ |
-| Needs LLM to store | Yes (scope inference) | No |
-| Infrastructure | Database server | None |
-| Audit trail | Complex | Just read the file |
+| Database schema context | ❌ | ✅ (soul-schema) |
+| Enterprise multi-tenant | ❌ | ✅ (SoulMate API) |
+| RAG + RLM hybrid | ❌ | ✅ (soul-agent) |
+| Infrastructure | Database server | None (or cloud API) |
 
-## API
+## API Reference
 
 ### SoulMemory
 
@@ -67,85 +110,105 @@ from crewai_soul import SoulMemory
 memory = SoulMemory(
     soul_path="SOUL.md",      # Agent identity
     memory_path="MEMORY.md",  # Memory log
+    provider="anthropic",     # LLM provider for RAG
+    use_hybrid=True,          # Enable RAG+RLM (default: True if soul-agent installed)
 )
 
 # Store a memory
-memory.remember("We decided to use PostgreSQL.")
+memory.remember("We decided to use PostgreSQL.", scope="/decisions")
 
 # Recall relevant memories
-matches = memory.recall("What database did we choose?")
+matches = memory.recall("What database did we choose?", limit=5)
 for m in matches:
     print(f"[{m.score:.2f}] {m.content}")
 
-# Clear memories
-memory.forget()
+# Clear memories (optionally by scope)
+memory.forget(scope="/decisions")
 
 # Get stats
 print(memory.info())
+
+# View structure
+print(memory.tree())
 ```
 
-### With Scopes
+### SchemaMemory
 
 ```python
-# Store with a scope tag
-memory.remember("Sprint velocity is 42 points", scope="/team/metrics")
+from crewai_soul import SchemaMemory
 
-# Recall from specific scope
-matches = memory.recall("velocity", scope="/team")
-```
-
-### Per-Agent Memory
-
-```python
-from crewai import Agent
-from crewai_soul import SoulMemory
-
-# Each agent gets its own memory file
-researcher = Agent(
-    role="Researcher",
-    goal="Find information",
-    memory=SoulMemory(memory_path="researcher_memory.md"),
+schema = SchemaMemory(
+    database_url="postgresql://...",
+    llm_provider="anthropic",
 )
 
-writer = Agent(
-    role="Writer", 
-    goal="Write reports",
-    memory=SoulMemory(memory_path="writer_memory.md"),
-)
+# Generate descriptions for all tables
+schema.generate()
+
+# Or specific tables only
+schema.generate(tables=["customers", "orders"])
+
+# Get single table description
+info = schema.describe("customers")
+
+# Generate context for a query
+context = schema.context_for("revenue by region")
+
+# Export in different formats
+schema.save("schema.json", format="json")
+schema.save("schema.yml", format="dbt")
+schema.save("training.jsonl", format="vanna")
+
+# Full markdown documentation
+docs = schema.to_markdown()
 ```
 
-## Standalone Usage
-
-Works without CrewAI too:
+### SoulMateClient
 
 ```python
-from crewai_soul import SoulMemory
+from crewai_soul import SoulMateClient
 
-memory = SoulMemory()
+client = SoulMateClient(
+    api_key="...",              # or SOULMATE_API_KEY env var
+    base_url="...",             # or SOULMATE_URL env var
+    tenant_id="...",            # for multi-tenant isolation
+)
 
-# Build up knowledge
-memory.remember("The API rate limit is 1000 requests per minute.")
-memory.remember("Our staging environment uses port 8080.")
+# Store memories
+client.remember("Important fact", scope="/project")
 
-# Later, recall what you need
-matches = memory.recall("What are our API limits?")
+# Search
+results = client.recall("important", limit=10)
+
+# Full RAG+RLM Q&A
+answer = client.ask("What do we know about...")
+
+# Clear memories
+client.forget(scope="/project")
+
+# Get stats
+info = client.info()
 ```
 
-## Upgrading to Semantic Search
+## The Soul Ecosystem
 
-For better recall on large memory files, install with RAG support:
+crewai-soul brings together:
 
-```bash
-pip install crewai-soul[rag]
-```
+| Package | Purpose | PyPI |
+|---------|---------|------|
+| **soul-agent** | Persistent memory & identity | `pip install soul-agent` |
+| **soul-schema** | Database semantic layers | `pip install soul-schema` |
+| **crewai-soul** | CrewAI integration (this package) | `pip install crewai-soul` |
 
-This uses [soul-agent](https://github.com/menonpg/soul.py)'s hybrid RAG+RLM retrieval under the hood.
+**SoulMate API** — Enterprise hosted service for production deployments.
 
 ## Links
 
-- [soul.py](https://github.com/menonpg/soul.py) — The core library
+- [soul.py](https://github.com/menonpg/soul.py) — Core memory library
+- [soul-schema](https://github.com/menonpg/soul-schema) — Database documentation
+- [SoulMate](https://menonpg.github.io/soulmate) — Enterprise offering
 - [CrewAI](https://github.com/crewAIInc/crewAI) — Multi-agent framework
-- [SoulMate API](https://soulmate-api.themenonlab.com) — Hosted memory service
+- [The Menon Lab](https://themenonlab.com) — Research & tools
 
 ## License
 

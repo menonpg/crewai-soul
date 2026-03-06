@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+crewai_soul/__init__.py
+crewai_soul/memory.py
+crewai_soul.egg-info/PKG-INFO
+crewai_soul.egg-info/SOURCES.txt
+crewai_soul.egg-info/dependency_links.txt
+crewai_soul.egg-info/requires.txt
+crewai_soul.egg-info/top_level.txt
+tests/test_memory.py

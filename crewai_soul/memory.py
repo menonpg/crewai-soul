@@ -106,7 +106,7 @@ Be concise, accurate, and helpful.
         memory_path: str = "MEMORY.md",
         provider: str = "anthropic",
         api_key: Optional[str] = None,
-        use_hybrid: bool = False,
+        use_hybrid: bool = True,  # Default True since soul-agent is now required
         auto_create: bool = True,
         # Advanced options for soul-agent
         qdrant_url: Optional[str] = None,
