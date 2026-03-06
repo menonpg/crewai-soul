@@ -1,0 +1,152 @@
+# crewai-soul 🧠
+
+**Markdown-native memory for CrewAI agents.**
+
+Your crew's memory shouldn't require a database. `crewai-soul` stores everything in two simple markdown files:
+
+- `SOUL.md` — Agent identity (who it is, how it behaves)
+- `MEMORY.md` — Timestamped log of all interactions
+
+Human-readable. Git-versionable. No infrastructure required.
+
+## Install
+
+```bash
+pip install crewai-soul
+```
+
+## Quick Start
+
+```python
+from crewai import Crew, Agent, Task
+from crewai_soul import SoulMemory
+
+# Create markdown-based memory
+memory = SoulMemory()
+
+# Use it with your crew
+crew = Crew(
+    agents=[researcher, writer],
+    tasks=[research_task, writing_task],
+    memory=memory,
+)
+
+result = crew.kickoff()
+```
+
+After running, check `MEMORY.md`:
+
+```markdown
+# Memory Log
+
+## 2026-03-06 22:30:15 UTC
+The researcher found that PostgreSQL handles 10k concurrent connections.
+
+## 2026-03-06 22:31:02 UTC
+The writer produced a technical comparison document.
+```
+
+## Why Markdown?
+
+| Feature | CrewAI Built-in | crewai-soul |
+|---------|-----------------|-------------|
+| Storage | Vector database | Markdown files |
+| Human-readable | ❌ | ✅ |
+| Git-versionable | ❌ | ✅ |
+| Needs LLM to store | Yes (scope inference) | No |
+| Infrastructure | Database server | None |
+| Audit trail | Complex | Just read the file |
+
+## API
+
+### SoulMemory
+
+```python
+from crewai_soul import SoulMemory
+
+memory = SoulMemory(
+    soul_path="SOUL.md",      # Agent identity
+    memory_path="MEMORY.md",  # Memory log
+)
+
+# Store a memory
+memory.remember("We decided to use PostgreSQL.")
+
+# Recall relevant memories
+matches = memory.recall("What database did we choose?")
+for m in matches:
+    print(f"[{m.score:.2f}] {m.content}")
+
+# Clear memories
+memory.forget()
+
+# Get stats
+print(memory.info())
+```
+
+### With Scopes
+
+```python
+# Store with a scope tag
+memory.remember("Sprint velocity is 42 points", scope="/team/metrics")
+
+# Recall from specific scope
+matches = memory.recall("velocity", scope="/team")
+```
+
+### Per-Agent Memory
+
+```python
+from crewai import Agent
+from crewai_soul import SoulMemory
+
+# Each agent gets its own memory file
+researcher = Agent(
+    role="Researcher",
+    goal="Find information",
+    memory=SoulMemory(memory_path="researcher_memory.md"),
+)
+
+writer = Agent(
+    role="Writer", 
+    goal="Write reports",
+    memory=SoulMemory(memory_path="writer_memory.md"),
+)
+```
+
+## Standalone Usage
+
+Works without CrewAI too:
+
+```python
+from crewai_soul import SoulMemory
+
+memory = SoulMemory()
+
+# Build up knowledge
+memory.remember("The API rate limit is 1000 requests per minute.")
+memory.remember("Our staging environment uses port 8080.")
+
+# Later, recall what you need
+matches = memory.recall("What are our API limits?")
+```
+
+## Upgrading to Semantic Search
+
+For better recall on large memory files, install with RAG support:
+
+```bash
+pip install crewai-soul[rag]
+```
+
+This uses [soul-agent](https://github.com/menonpg/soul.py)'s hybrid RAG+RLM retrieval under the hood.
+
+## Links
+
+- [soul.py](https://github.com/menonpg/soul.py) — The core library
+- [CrewAI](https://github.com/crewAIInc/crewAI) — Multi-agent framework
+- [SoulMate API](https://soulmate-api.themenonlab.com) — Hosted memory service
+
+## License
+
+MIT

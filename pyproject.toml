@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crewai-soul"
+version = "0.1.0"
+description = "Markdown-native memory for CrewAI agents. Human-readable, git-versionable, no database required."
+readme = "README.md"
+license = "MIT"
+authors = [{name = "Prahlad G. Menon", email = "menon.prahlad@gmail.com"}]
+keywords = ["crewai", "memory", "ai", "agents", "llm", "markdown", "soul"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+rag = ["soul-agent>=0.1.7"]
+crewai = ["crewai>=0.100.0"]
+
+[project.urls]
+Homepage = "https://github.com/menonpg/crewai-soul"
+Documentation = "https://github.com/menonpg/crewai-soul#readme"
+Repository = "https://github.com/menonpg/crewai-soul"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["crewai_soul*"]
