@@ -1,6 +1,6 @@
+soul-agent>=0.1.7
+soul-schema>=0.1.0
+httpx>=0.25.0
 
 [crewai]
 crewai>=0.100.0
-
-[rag]
-soul-agent>=0.1.7

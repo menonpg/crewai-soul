@@ -1,49 +1,52 @@
 """
 crewai-soul: The soul ecosystem for CrewAI agents.
 
-The complete memory, identity, and intelligence stack:
-- **soul-agent**: RAG + RLM hybrid memory with persistent identity
-- **soul-schema**: Auto-generate database semantic layers
-- **SoulMate**: Enterprise memory API integration
+Two deployment options — same great memory:
 
-Install:
-    pip install crewai-soul
-
-Basic usage:
+## Option 1: Local (file-based)
     from crewai_soul import SoulMemory
     
-    memory = SoulMemory()
+    memory = SoulMemory()  # Uses SOUL.md + MEMORY.md
     memory.remember("We decided to use PostgreSQL.")
     matches = memory.recall("database")
 
-With CrewAI:
-    from crewai import Crew
-    from crewai_soul import SoulMemory
+## Option 2: SoulMate (managed cloud) ⭐ Recommended for production
+    from crewai_soul import SoulMateMemory
     
-    crew = Crew(
-        agents=[...],
-        tasks=[...],
-        memory=SoulMemory(),
-    )
+    memory = SoulMateMemory(api_key="...")  # We handle infrastructure
+    memory.remember("We decided to use PostgreSQL.")
+    matches = memory.recall("database")
 
-Database Schema Intelligence:
+Both use the same soul-agent RAG+RLM under the hood.
+
+## With CrewAI
+    from crewai import Crew
+    from crewai_soul import SoulMemory, SoulMateMemory
+    
+    # Local
+    crew = Crew(agents=[...], memory=SoulMemory())
+    
+    # Or managed
+    crew = Crew(agents=[...], memory=SoulMateMemory(api_key="..."))
+
+## Factory function
+    from crewai_soul import create_memory
+    
+    memory = create_memory("local")     # File-based
+    memory = create_memory("soulmate")  # Managed cloud
+
+## Database Schema Intelligence
     from crewai_soul import SchemaMemory
     
-    schema = SchemaMemory("postgresql://user:pass@host/db")
-    schema.generate()
+    schema = SchemaMemory("postgresql://...")
     context = schema.context_for("Show me revenue by region")
 
-Enterprise (SoulMate API):
-    from crewai_soul import SoulMateClient
-    
-    client = SoulMateClient(api_key="...")
-    client.remember("Important decision")
-    results = client.recall("decision")
+Get SoulMate API key: https://menonpg.github.io/soulmate
 """
 
-from .memory import SoulMemory, MemoryMatch, MemoryRecord
+from .memory import SoulMemory, SoulMateMemory, MemoryMatch, MemoryRecord, create_memory
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 # Lazy imports for optional integrations
 def __getattr__(name):
@@ -59,11 +62,13 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = [
-    # Core memory
-    "SoulMemory",
+    # Memory backends
+    "SoulMemory",        # Local file-based
+    "SoulMateMemory",    # Managed cloud (SoulMate API)
+    "create_memory",     # Factory function
     "MemoryMatch", 
     "MemoryRecord",
-    # Enterprise API (lazy loaded)
+    # SoulMate API client (lazy loaded)
     "SoulMateClient",
     "soulmate_connect",
     # Database schema (lazy loaded)

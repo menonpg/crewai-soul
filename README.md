@@ -6,7 +6,16 @@ One package, full stack:
 - **Persistent Memory** — Markdown-native, git-versionable, human-readable
 - **Hybrid Retrieval** — RAG + RLM via [soul-agent](https://github.com/menonpg/soul.py)
 - **Database Intelligence** — Auto-generated semantic layers via [soul-schema](https://github.com/menonpg/soul-schema)
-- **Enterprise Ready** — SoulMate API integration for production
+- **Managed Cloud Option** — [SoulMate](https://menonpg.github.io/soulmate) handles memory infrastructure for you
+
+## Choose Your Setup
+
+| Setup | Best For | Storage |
+|-------|----------|---------|
+| **Local** (default) | Development, git-tracked projects | `SOUL.md` + `MEMORY.md` files |
+| **SoulMate** (managed) | Production, teams, zero-infra | Cloud API (we handle it) |
+
+Both use the same soul-agent RAG+RLM under the hood.
 
 ## Install
 
@@ -66,9 +75,9 @@ agent = Agent(
 )
 ```
 
-### Enterprise: SoulMate API
+### SoulMate: Managed Memory (Recommended for Production)
 
-For production deployments with multi-tenant isolation:
+Don't want to manage files? **SoulMate** is the managed version of soul-agent — same RAG+RLM, zero infrastructure:
 
 ```python
 from crewai_soul import SoulMateClient

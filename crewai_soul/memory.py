@@ -1,12 +1,11 @@
 """
-SoulMemory: Markdown-native memory backend for CrewAI.
+SoulMemory: Memory backend for CrewAI agents.
 
-Two modes:
-1. Standalone (no deps): Basic keyword matching on MEMORY.md
-2. With soul-agent: Full RAG + RLM hybrid retrieval, multi-provider support
+Two deployment options:
+1. **Local** (default): File-based (SOUL.md + MEMORY.md), git-versionable
+2. **SoulMate** (managed): Cloud API, zero infrastructure, same RAG+RLM
 
-Install with RAG support:
-    pip install crewai-soul[rag]
+Both use soul-agent's hybrid RAG+RLM retrieval under the hood.
 """
 
 import os
@@ -462,6 +461,151 @@ Be concise, accurate, and helpful.
         return self.recall(query, limit=limit)
 
 
+# ── SoulMate-backed Memory ────────────────────────────────────────────────────
+
+class SoulMateMemory:
+    """
+    Managed memory backend using SoulMate API.
+    
+    Same interface as SoulMemory, but backed by SoulMate cloud service.
+    Zero infrastructure — we handle the files, vectors, and retrieval.
+    
+    Usage:
+        from crewai_soul import SoulMateMemory
+        
+        memory = SoulMateMemory(api_key="your-key")
+        memory.remember("Important decision")
+        matches = memory.recall("decision")
+    
+    With CrewAI:
+        crew = Crew(
+            agents=[...],
+            memory=SoulMateMemory(api_key="..."),
+        )
+    
+    Get your API key: https://menonpg.github.io/soulmate
+    """
+    
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+        scope: Optional[str] = None,
+    ):
+        """
+        Initialize SoulMate-backed memory.
+        
+        Args:
+            api_key: SoulMate API key (or SOULMATE_API_KEY env var)
+            base_url: API URL (or SOULMATE_URL env var)
+            tenant_id: Tenant ID for multi-tenant isolation
+            scope: Default scope for all operations
+        """
+        # Lazy import to avoid circular deps
+        from .soulmate import SoulMateClient
+        
+        self._client = SoulMateClient(
+            api_key=api_key,
+            base_url=base_url,
+            tenant_id=tenant_id,
+        )
+        self._default_scope = scope
+    
+    def remember(
+        self,
+        content: str,
+        scope: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Store a memory in SoulMate."""
+        self._client.remember(
+            content=content,
+            scope=scope or self._default_scope,
+            metadata=metadata,
+        )
+    
+    def recall(
+        self,
+        query: str,
+        limit: int = 5,
+        scope: Optional[str] = None,
+    ) -> List[MemoryMatch]:
+        """Retrieve relevant memories from SoulMate."""
+        results = self._client.recall(
+            query=query,
+            limit=limit,
+            scope=scope or self._default_scope,
+        )
+        
+        matches = []
+        for r in results:
+            record = MemoryRecord(
+                content=r.get("content", ""),
+                timestamp=r.get("timestamp", ""),
+                scope=r.get("scope", ""),
+                metadata=r.get("metadata", {}),
+            )
+            matches.append(MemoryMatch(record=record, score=r.get("score", 1.0)))
+        
+        return matches
+    
+    def forget(self, scope: Optional[str] = None) -> int:
+        """Clear memories from SoulMate."""
+        result = self._client.forget(scope=scope or self._default_scope)
+        return result.get("deleted", -1)
+    
+    def reset(self) -> None:
+        """Clear all memory."""
+        self.forget()
+    
+    def info(self) -> Dict[str, Any]:
+        """Get memory statistics from SoulMate."""
+        return self._client.info()
+    
+    # ── CrewAI compatibility ──────────────────────────────────────────────────
+    
+    def save(self, content: str, metadata: Optional[Dict] = None) -> None:
+        """Alias for remember()."""
+        self.remember(content, metadata=metadata)
+    
+    def search(self, query: str, limit: int = 5) -> List[MemoryMatch]:
+        """Alias for recall()."""
+        return self.recall(query, limit=limit)
+
+
+# ── Factory function ──────────────────────────────────────────────────────────
+
+def create_memory(
+    backend: str = "local",
+    **kwargs,
+) -> "SoulMemory | SoulMateMemory":
+    """
+    Create a memory backend for CrewAI.
+    
+    Args:
+        backend: "local" (file-based) or "soulmate" (managed cloud)
+        **kwargs: Passed to the memory class
+        
+    Returns:
+        SoulMemory or SoulMateMemory instance
+        
+    Examples:
+        # Local file-based (default)
+        memory = create_memory()
+        
+        # SoulMate managed
+        memory = create_memory("soulmate", api_key="...")
+        
+        # With options
+        memory = create_memory("local", provider="openai", use_hybrid=True)
+    """
+    if backend == "soulmate":
+        return SoulMateMemory(**kwargs)
+    else:
+        return SoulMemory(**kwargs)
+
+
 # ── Exports ───────────────────────────────────────────────────────────────────
 
-__all__ = ["SoulMemory", "MemoryMatch", "MemoryRecord"]
+__all__ = ["SoulMemory", "SoulMateMemory", "MemoryMatch", "MemoryRecord", "create_memory"]
