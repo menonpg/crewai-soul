@@ -144,11 +144,15 @@ class SoulMemory:
             entries = [e for e in entries if scope in e.get("scope", "")]
         
         # Score by keyword overlap (simple but effective)
-        query_words = set(query.lower().split())
+        import re
+        def tokenize(text):
+            return set(re.findall(r'\b\w+\b', text.lower()))
+        
+        query_words = tokenize(query)
         scored = []
         
         for entry in entries:
-            entry_words = set(entry["content"].lower().split())
+            entry_words = tokenize(entry["content"])
             overlap = len(query_words & entry_words)
             if overlap > 0:
                 score = overlap / len(query_words)

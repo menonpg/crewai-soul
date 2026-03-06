@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crewai-soul"
-version = "0.1.0"
+version = "0.1.1"
 description = "Markdown-native memory for CrewAI agents. Human-readable, git-versionable, no database required."
 readme = "README.md"
 license = "MIT"
