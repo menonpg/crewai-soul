@@ -1,5 +1,10 @@
 # crewai-soul 🧠
 
+[![PyPI version](https://img.shields.io/pypi/v/crewai-soul.svg)](https://pypi.org/project/crewai-soul/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/crewai-soul.svg)](https://pypi.org/project/crewai-soul/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Amazon Book](https://img.shields.io/badge/📚_Book-Amazon-FF9900?logo=amazon&logoColor=white)](https://a.co/d/02T0WadG)
+
 **The soul ecosystem for CrewAI agents.**
 
 One package, full stack:
